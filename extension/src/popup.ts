@@ -58,3 +58,6 @@ $('validate').addEventListener('click', async () => {
 });
 
 load();
+// the side panel stays open: refresh when ads are selected, results land or a pairing changes
+let t: number | undefined;
+chrome.storage.onChanged.addListener(() => { clearTimeout(t); t = window.setTimeout(load, 300); });

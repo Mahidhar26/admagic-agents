@@ -1,6 +1,9 @@
 // All backend calls go through here; the page and popup never hold the token in their own code.
 const DEFAULT_BACKEND = 'http://localhost:3000';
 
+// the toolbar icon opens the side panel, which stays open while you use the Ad Library
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+
 async function settings() {
   const s = await chrome.storage.local.get(['backend', 'token']);
   return { backend: (s.backend as string) || DEFAULT_BACKEND, token: s.token as string | undefined };
@@ -13,8 +16,11 @@ async function api(path: string, init: RequestInit = {}) {
     headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
   });
   const body = await res.json().catch(() => ({}));
-  if (res.ok) await chrome.storage.local.set({ revoked: false });
-  else if (res.status === 401 && token) await chrome.storage.local.set({ revoked: true });
+  const revoked = !res.ok && res.status === 401 && !!token;
+  if (res.ok || revoked) {
+    const { revoked: was } = await chrome.storage.local.get('revoked');
+    if (!!was !== revoked) await chrome.storage.local.set({ revoked });
+  }
   return { status: res.status, body };
 }
 

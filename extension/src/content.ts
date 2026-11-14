@@ -4,6 +4,7 @@ type Result = { score?: number; verdict?: string; insights?: string[]; heatmap?:
 const MIN_SIZE = 150; // skips avatars, icons and hidden or zero-size elements
 const cards = new Map<string, { media: HTMLImageElement | HTMLVideoElement; box: HTMLElement; url: string }>();
 let n = 0;
+let lastCount = -1;
 
 // videos are scored by their poster frame: AdMagic has no video tool yet
 const creativeUrl = (m: HTMLImageElement | HTMLVideoElement) => (m instanceof HTMLImageElement ? m.currentSrc || m.src : m.poster);
@@ -38,7 +39,7 @@ function scan() {
     for (const t of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend']) bar.addEventListener(t, (e) => e.stopPropagation());
     box.append(bar);
   });
-  chrome.storage.local.set({ adsFound: cards.size });
+  if (cards.size !== lastCount) chrome.storage.local.set({ adsFound: (lastCount = cards.size) }); // only on change: the side panel refreshes on every write
 }
 
 async function toggleSelect(url: string, on: boolean) {

@@ -3,15 +3,37 @@
   "name": "AdMagic Validator",
   "version": "0.1.0",
   "description": "Score Meta ads with AdMagic's neural analysis, paid per use through Qatom.",
-  "permissions": ["storage", "activeTab"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "sidePanel"
+  ],
   "host_permissions": [
     "https://www.facebook.com/ads/library/*",
     "https://*.vercel.app/*",
     "http://localhost:3000/*"
   ],
-  "background": { "service_worker": "background.js" },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
-    { "matches": ["https://www.facebook.com/ads/library/*"], "js": ["content.js"], "css": ["content.css"], "run_at": "document_idle" }
+    {
+      "matches": [
+        "https://www.facebook.com/ads/library/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
   ],
-  "action": { "default_popup": "popup.html", "default_title": "AdMagic Validator" }
+  "action": {
+    "default_title": "AdMagic Validator"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  }
 }
