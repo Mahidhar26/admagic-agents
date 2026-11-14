@@ -13,7 +13,7 @@ export type Analysis = {
   score: number; verdict?: string; insights: string[]; heatmap?: HeatPoint[]; emotionCurve?: number[];
   attention?: { element: string; share: number }[]; dimensions?: Record<string, number>; creativeId?: string;
 };
-export type Comparison = { ranking: { url: string; score: number; creativeId?: string }[]; winnerUrl: string };
+export type Comparison = { ranking: { url: string; score: number; verdict?: string; insights: string[]; creativeId?: string }[]; winnerUrl: string };
 export type Objective = 'awareness' | 'engagement' | 'traffic' | 'promotional' | 'leads' | 'cta';
 
 const live = process.env.ADMAGIC_MODE === 'live';
@@ -111,10 +111,10 @@ export async function analyzeVideo(url: string): Promise<Analysis> {
 }
 
 /** No compare tool in AdMagic: analyze each creative (1 AdMagic analysis each) and rank. */
-export async function compare(urls: string[]): Promise<Comparison> {
+export async function compare(urls: string[], objective?: Objective): Promise<Comparison> {
   const scored = await Promise.all(urls.map(async (url) => {
-    const a = await scoreImage(url);
-    return { url, score: a.score, creativeId: a.creativeId };
+    const a = await scoreImage(url, objective);
+    return { url, score: a.score, verdict: a.verdict, insights: a.insights, creativeId: a.creativeId };
   }));
   const ranking = scored.sort((a, b) => b.score - a.score);
   return { ranking, winnerUrl: ranking[0].url };

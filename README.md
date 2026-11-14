@@ -17,6 +17,7 @@ Built for the Agentic Payments Hackathon Toronto, **Use** track (with a light Co
 | --- | --- |
 | `app/api/validate`, `compare`, `purchase/[id]`, `budget`, `receipts` | Validator API: auth → cache → budget → pay (Qatom) → analyze (AdMagic) |
 | `app/api/affiliates/...`, `app/r/[code]` | Offers, affiliates, tracked links, dwell beacon, signed webhooks, payouts, stats |
+| `app/api/qatom/score`, `compare` | Fulfilment for the Qatom catalog items "AdMagic: Score one ad" (`{ image_url, objective? }`) and "AdMagic: Compare ad creatives" (`{ image_urls, objective? }`). Qatom calls them after the buyer pays, with `Authorization: Bearer $QATOM_FULFILMENT_SECRET` |
 | `app/api/mcp/[transport]` | MCP tools for AI-agent affiliates |
 | `app/api/pair`, `app/api/tokens` | Extension pairing and scoped, revocable tokens |
 | `app/affiliates`, `app/activity`, `app/demo-store/[offerId]`, `app/login` | Brand pages and the demo store |

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  checkToken, pairingValid, overBudget, torontoMidnight, signBody, verifySignature,
+  checkToken, pairingValid, fromQatom, overBudget, torontoMidnight, signBody, verifySignature,
   isQualifiedClick, conversionEarnings, initialEarning, refundAction, payableTotal, PAIRING_MS,
 } from '../lib/rules';
 import { MockQatomClient } from '../lib/qatom';
@@ -94,4 +94,13 @@ describe('mock Qatom', () => {
     const q = new MockQatomClient(0.5);
     expect((await q.purchase({ walletId: 'w', itemId: 'i', priceUsd: 0.99, input: {}, idempotencyKey: 'k' })).status).toBe('failed');
   });
+});
+
+describe('qatom fulfilment secret', () => {
+  it('accepts the saved header', () => expect(fromQatom('Bearer s3cret', 's3cret')).toBe(true));
+  it('rejects a wrong or missing header', () => {
+    expect(fromQatom('Bearer nope', 's3cret')).toBe(false);
+    expect(fromQatom(null, 's3cret')).toBe(false);
+  });
+  it('refuses everything when no secret is configured', () => expect(fromQatom('Bearer ', undefined)).toBe(false));
 });

@@ -44,6 +44,14 @@ export function verifySignature(raw: string, header: string | null, secret: stri
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+/** Qatom's fulfilment call carries the Authorization header saved on the catalog item. */
+export function fromQatom(header: string | null, secret: string | undefined): boolean {
+  if (!secret || !header) return false;
+  const a = Buffer.from(sha256(header)); // hash first so lengths match for timingSafeEqual
+  const b = Buffer.from(sha256(`Bearer ${secret}`));
+  return timingSafeEqual(a, b);
+}
+
 // ---- clicks ----
 export const QUALIFIED_DWELL_MS = 5000;
 export const visitorHash = (ip: string, ua: string, now = new Date()) =>
