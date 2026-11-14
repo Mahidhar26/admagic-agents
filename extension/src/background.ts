@@ -13,7 +13,8 @@ async function api(path: string, init: RequestInit = {}) {
     headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
   });
   const body = await res.json().catch(() => ({}));
-  if (res.status === 401) await chrome.storage.local.set({ revoked: true });
+  if (res.ok) await chrome.storage.local.set({ revoked: false });
+  else if (res.status === 401 && token) await chrome.storage.local.set({ revoked: true });
   return { status: res.status, body };
 }
 

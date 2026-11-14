@@ -5,8 +5,8 @@ const MIN_SIZE = 150; // skips avatars, icons and hidden or zero-size elements
 const cards = new Map<string, { media: HTMLImageElement | HTMLVideoElement; box: HTMLElement; url: string }>();
 let n = 0;
 
-const creativeUrl = (m: HTMLImageElement | HTMLVideoElement) =>
-  m instanceof HTMLImageElement ? m.currentSrc || m.src : m.poster || m.currentSrc || m.src;
+// videos are scored by their poster frame: AdMagic has no video tool yet
+const creativeUrl = (m: HTMLImageElement | HTMLVideoElement) => (m instanceof HTMLImageElement ? m.currentSrc || m.src : m.poster);
 
 function scan() {
   document.querySelectorAll<HTMLImageElement | HTMLVideoElement>('img, video').forEach((media) => {
@@ -24,7 +24,7 @@ function scan() {
     bar.className = 'admagic-bar';
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = media instanceof HTMLVideoElement ? 'Validate $1.99' : 'Validate $0.99';
+    btn.textContent = 'Validate $0.99';
     btn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); validate(id); };
     const label = document.createElement('label');
     const cb = document.createElement('input');
@@ -92,9 +92,8 @@ function drawHeat(c: { media: HTMLElement; box: HTMLElement }, points: NonNullab
 
 async function validate(id: string) {
   const c = cards.get(id)!;
-  const kind = c.media instanceof HTMLVideoElement ? 'video' : 'image';
   panel(id).textContent = 'Paying…';
-  const r = await chrome.runtime.sendMessage({ type: 'validate', id, url: c.url, kind });
+  const r = await chrome.runtime.sendMessage({ type: 'validate', id, url: c.url, kind: 'image' });
   show(id, r.status === 200 ? r.body : { error: r.status === 401 ? 'Access revoked: pair again in the popup' : r.body?.error ?? 'Failed' });
 }
 
@@ -120,7 +119,8 @@ async function restore() {
 }
 
 let timer: number | undefined;
-new MutationObserver(() => { clearTimeout(timer); timer = window.setTimeout(() => { scan(); restore(); }, 300); })
-  .observe(document.body, { childList: true, subtree: true });
+const later = () => { clearTimeout(timer); timer = window.setTimeout(() => { scan(); restore(); }, 300); };
+new MutationObserver(later).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src', 'poster'] });
+document.addEventListener('load', later, true); // images that finish loading after they were added
 scan();
 restore();

@@ -19,6 +19,7 @@ export async function hashCreative(url: string) {
   }
   const res = await fetch(u, { redirect: 'error', signal: AbortSignal.timeout(20_000) });
   if (!res.ok) throw new Error(`Could not download the creative (${res.status})`);
+  if (!/^(image|video)\//.test(res.headers.get('content-type') ?? '')) throw new Error('That URL is not an image: paste the image address, not the page');
   const bytes = new Uint8Array(await res.arrayBuffer());
   if (bytes.length > MAX_BYTES) throw new Error('Creative is too large');
   return sha256(bytes); // bytes, not URL: Meta URLs change
