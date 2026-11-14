@@ -34,6 +34,8 @@ function scan() {
     cb.onchange = () => toggleSelect(url, cb.checked);
     label.append(cb, 'Select');
     bar.append(btn, label);
+    // Facebook acts on pointer/mouse down (opens 'Link to ad'), so keep every press on our controls away from its handlers
+    for (const t of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend']) bar.addEventListener(t, (e) => e.stopPropagation());
     box.append(bar);
   });
   chrome.storage.local.set({ adsFound: cards.size });
