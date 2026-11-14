@@ -6,7 +6,8 @@ import { createHmac } from 'node:crypto';
 const BASE = process.env.BASE ?? 'http://localhost:3000';
 const exp = String(Date.now() + 3600_000);
 const ADMIN = `admin_session=${exp}.${createHmac('sha256', process.env.SESSION_SECRET).update(exp).digest('hex')}`;
-const IMG = (n) => `https://images.unsplash.com/photo-${['1542291026-7eec264c27ff', '1523275335684-37898b6baf30', '1505740420928-5e560c06d30e', '1526170375885-4d8ecf77b99f'][n]}?w=600`;
+const IMG = (n) => `https://images.unsplash.com/photo-${['1542291026-7eec264c27ff', '1523275335684-37898b6baf30', '1505740420928-5e560c06d30e', '1526170375885-4d8ecf77b99f'][n]}?w=${WIDTH}`;
+const WIDTH = 400 + Math.floor(Math.random() * 800); // a new size per run means new bytes, so the cache doesn't hide the first payment
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 const check = (name, ok, extra = '') => { if (!ok) fails++; console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${extra ? '  · ' + extra : ''}`); };
