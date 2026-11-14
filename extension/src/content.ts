@@ -16,7 +16,8 @@ function scan() {
     if (rect.width < MIN_SIZE || rect.height < MIN_SIZE || !url.startsWith('https://') || getComputedStyle(media).visibility === 'hidden') return;
     const id = `am${++n}`;
     media.dataset.admagic = id;
-    const box = media.parentElement!;
+    // Ad Library wraps creatives in a link that grabs clicks: put our controls beside the link, not inside it
+    const box = (media.closest('a')?.parentElement ?? media.parentElement)!;
     if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
     cards.set(id, { media, box, url });
 
@@ -77,8 +78,11 @@ function drawHeat(c: { media: HTMLElement; box: HTMLElement }, points: NonNullab
   c.box.querySelector(':scope > .admagic-heat')?.remove();
   const canvas = document.createElement('canvas');
   canvas.className = 'admagic-heat';
-  const { width, height } = c.media.getBoundingClientRect();
+  const m = c.media.getBoundingClientRect();
+  const b = c.box.getBoundingClientRect();
+  const { width, height } = m;
   canvas.width = width; canvas.height = height;
+  Object.assign(canvas.style, { left: `${m.left - b.left}px`, top: `${m.top - b.top}px`, width: `${width}px`, height: `${height}px` });
   const ctx = canvas.getContext('2d')!;
   for (const pt of points) {
     const g = ctx.createRadialGradient(pt.x * width, pt.y * height, 0, pt.x * width, pt.y * height, pt.r * Math.max(width, height));

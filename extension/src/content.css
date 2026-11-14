@@ -4,5 +4,5 @@
 .admagic-panel { position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 2147483000; background: rgba(17,17,17,.92); color: #fff; border-radius: 6px; padding: 8px; font: 12px/1.4 system-ui, sans-serif; }
 .admagic-panel a { color: #8ef; }
 .admagic-panel .score { font-size: 20px; font-weight: 700; }
-.admagic-heat { position: absolute; inset: 0; pointer-events: none; z-index: 2147482999; }
+.admagic-heat { position: absolute; pointer-events: none; z-index: 2147482999; }
 .admagic-winner { outline: 4px solid #16a34a !important; outline-offset: -4px; }
