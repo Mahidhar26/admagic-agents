@@ -1,5 +1,5 @@
 // Runs on the Meta Ad Library. Adds Validate + Select to each visible ad creative. Never buys without a click.
-type Result = { score?: number; insights?: string[]; heatmap?: { x: number; y: number; r: number; v: number }[]; receiptUrl?: string; analysisId?: string; cached?: boolean; error?: string };
+type Result = { score?: number; verdict?: string; insights?: string[]; heatmap?: { x: number; y: number; r: number; v: number }[]; receiptUrl?: string; analysisId?: string; cached?: boolean; error?: string };
 
 const MIN_SIZE = 150; // skips avatars, icons and hidden or zero-size elements
 const cards = new Map<string, { media: HTMLImageElement | HTMLVideoElement; box: HTMLElement; url: string }>();
@@ -59,7 +59,7 @@ function show(id: string, r: Result) {
   if (r.error) { p.textContent = r.error; return; }
   const score = document.createElement('div');
   score.className = 'score';
-  score.textContent = `Neural Score ${r.score}`;
+  score.textContent = `Neural Score ${r.score}${r.verdict ? ` · ${r.verdict}` : ''}`;
   const list = document.createElement('ul');
   for (const i of (r.insights ?? []).slice(0, 3)) { const li = document.createElement('li'); li.textContent = i; list.append(li); }
   const links = document.createElement('div');

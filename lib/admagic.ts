@@ -4,7 +4,7 @@
  *
  * Verified 2026-11-14 via tools/list: admagic_analyze_creative {image_url | image_base64, objective}.
  * There is no video or compare tool: Compare analyzes each creative and ranks them; video is not offered yet.
- * Response shapes are not published, so toAnalysis() reads them defensively. Check it against a real response.
+ * toAnalysis() follows a live response from 2026-11-14 (see tests/admagic.test.ts).
  */
 import { createHash } from 'node:crypto';
 
@@ -19,7 +19,7 @@ export type Objective = 'awareness' | 'engagement' | 'traffic' | 'promotional' |
 const live = process.env.ADMAGIC_MODE === 'live';
 export const videoSupported = !live; // AdMagic has no video tool yet; the route refuses video before paying
 
-async function callTool(name: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
+export async function callTool(name: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
   const res = await fetch(process.env.ADMAGIC_MCP_URL ?? 'https://admagic-app-production.up.railway.app/api/mcp', {
     method: 'POST',
     headers: {
@@ -42,40 +42,47 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<Re
   return result.structuredContent ?? JSON.parse(result.content?.find((c: { type: string }) => c.type === 'text')?.text ?? '{}');
 }
 
-const num = (v: unknown) => (typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' && !isNaN(+v) ? +v : undefined);
-const pick = (o: Record<string, unknown>, ...keys: string[]) => keys.map((k) => o[k]).find((v) => v !== undefined);
-const arr = (v: unknown) => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
+// The parts of admagic_analyze_creative's output we use (seen in a live response, 2026-11-14).
+type Raw = {
+  creative_id?: string; score?: number; verdict?: string; summary?: string;
+  scores?: Record<string, number>; // visual, emotional, attention, memory, language (0..100)
+  attention?: {
+    elements?: { name: string; sharePct: number; box?: { x: number; y: number; w: number; h: number } }[]; // box in % of the image
+    findings?: Record<string, unknown>[];
+  };
+};
 
-/** Maps admagic_analyze_creative's output to Analysis. Field names are guesses from the tool description. */
+const FULL_FRAME_PCT = 90; // a box this big is the background: drawing it would wash out the heatmap
+
 export function toAnalysis(raw: Record<string, unknown>): Analysis {
-  const report = (pick(raw, 'attention_report', 'attention', 'predicted_attention') ?? {}) as Record<string, unknown>;
-  const elements = arr(pick(report, 'elements', 'shares') ?? pick(raw, 'elements'));
-  const findings = arr(pick(raw, 'findings') ?? pick(report, 'findings'));
-  const score = num(pick(raw, 'overall_score', 'score', 'overall')) ?? 0;
+  const r = raw as Raw;
+  const elements = r.attention?.elements ?? [];
+  const dims = Object.entries(r.scores ?? {}).sort((a, b) => a[1] - b[1]);
 
-  const attention = elements.map((e) => ({ element: String(pick(e, 'name', 'element', 'label') ?? 'element'), share: num(pick(e, 'share', 'attention_share', 'value')) ?? 0 }));
-  // only elements that carry a box can be drawn as a heatmap: {x, y, w, h} as 0..1 (or 0..100)
-  const heatmap = elements.flatMap((e) => {
-    const b = (pick(e, 'bbox', 'box') ?? e) as Record<string, unknown>;
-    const [x, y, w, h] = ['x', 'y', 'w', 'h'].map((k) => num(b[k]) ?? num(b[{ w: 'width', h: 'height' }[k] ?? k]));
-    if ([x, y, w, h].some((v) => v === undefined)) return [];
-    const s = Math.max(x!, y!, w!, h!) > 1 ? 100 : 1;
-    return [{ x: (x! + w! / 2) / s, y: (y! + h! / 2) / s, r: Math.max(w!, h!) / s / 2, v: Math.min(1, (num(pick(e, 'share', 'attention_share')) ?? 0.5) * 2) }];
-  });
-  const insights = findings
-    .sort((a, b) => String(a.severity ?? '').localeCompare(String(b.severity ?? '')))
-    .map((f) => String(pick(f, 'fix', 'recommendation', 'title', 'finding', 'message') ?? ''))
+  // findings' shape isn't confirmed yet (empty in the sample), so read the likely text fields
+  const fixes = (r.attention?.findings ?? [])
+    .map((f) => String(f.fix ?? f.recommendation ?? f.title ?? f.message ?? f.finding ?? ''))
     .filter(Boolean);
-  const dims = pick(raw, 'dimension_scores', 'dimensions');
+  const insights = fixes.length ? fixes : [
+    ...elements.slice(0, 2).map((e) => `${e.name} draws ${Math.round(e.sharePct)}% of attention`),
+    ...(dims.length ? [`Weakest: ${dims[0][0]} (${Math.round(dims[0][1])}/100)`] : []),
+  ];
+
+  const heatmap = elements
+    .filter((e) => e.box && e.sharePct > 0 && Math.min(e.box.w, e.box.h) < FULL_FRAME_PCT)
+    .map(({ box, sharePct }) => ({
+      x: (box!.x + box!.w / 2) / 100, y: (box!.y + box!.h / 2) / 100,
+      r: Math.max(box!.w, box!.h) / 200, v: Math.min(1, sharePct / 50),
+    }));
 
   return {
-    score: score <= 1 ? Math.round(score * 100) : Math.round(score),
-    verdict: pick(raw, 'verdict') as string | undefined,
-    insights: insights.length ? insights.slice(0, 5) : attention.slice(0, 3).map((a) => `${a.element}: ${Math.round(a.share * (a.share <= 1 ? 100 : 1))}% of attention`),
+    score: Math.round(r.score ?? 0),
+    verdict: r.verdict,
+    insights: insights.slice(0, 5),
     heatmap: heatmap.length ? heatmap : undefined,
-    attention,
-    dimensions: dims && typeof dims === 'object' && !Array.isArray(dims) ? (dims as Record<string, number>) : undefined,
-    creativeId: pick(raw, 'creative_id', 'creativeId') as string | undefined,
+    attention: elements.map((e) => ({ element: e.name, share: e.sharePct })),
+    dimensions: r.scores,
+    creativeId: r.creative_id,
   };
 }
 

@@ -82,7 +82,7 @@ We are listing three catalogues on Qatom ([qatom.ai/learn](https://qatom.ai/lear
 - Compare → one `admagic_analyze_creative` per creative, ranked (AdMagic has no compare tool).
 - Video → not offered: AdMagic has no video tool yet, so `/api/validate` refuses video before paying.
 - Heatmap → drawn only for attention elements that come back with a box.
-- `toAnalysis()` in `lib/admagic.ts` reads the response defensively because the output schema is not published. Check it against one real response.
+- `toAnalysis()` in `lib/admagic.ts` maps the live response (checked 2026-11-14): `score`, `verdict`, `scores` (five dimensions), `attention.elements[].sharePct` and `box` (in % of the image). Re-check with `npm run check:admagic` (costs 1 analysis).
 
 ## Still to wire
 

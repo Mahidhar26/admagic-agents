@@ -1,24 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { toAnalysis } from '../lib/admagic';
 
-describe('toAnalysis (AdMagic analyze_creative output)', () => {
-  it('reads score, verdict, findings and attention shares', () => {
-    const a = toAnalysis({
-      overall_score: 72, verdict: 'Strong', creative_id: 'cr_1',
-      dimension_scores: { clarity: 80 },
-      attention_report: { elements: [{ name: 'Logo', share: 0.12, bbox: { x: 0.1, y: 0.1, w: 0.2, h: 0.1 } }, { name: 'Headline', share: 0.4 }] },
-      findings: [{ severity: 'high', fix: 'Enlarge the headline' }],
-    });
-    expect(a).toMatchObject({ score: 72, verdict: 'Strong', creativeId: 'cr_1', insights: ['Enlarge the headline'], dimensions: { clarity: 80 } });
-    expect(a.attention).toEqual([{ element: 'Logo', share: 0.12 }, { element: 'Headline', share: 0.4 }]);
-    expect(a.heatmap).toHaveLength(1); // only the element with a box
-    expect(a.heatmap![0].x).toBeCloseTo(0.2);
+// Trimmed from a live admagic_analyze_creative response (2026-11-14).
+const live = {
+  creative_id: '1fac5678-a8f6-4736-bcb0-d178649947d8', score: 58, verdict: 'OPTIMISE',
+  scores: { visual: 62.2, emotional: 27, attention: 77.1, memory: 31.4, language: 79 },
+  attention: {
+    elements: [
+      { name: 'Red running shoe', sharePct: 61.5, box: { x: 20, y: 25, w: 60, h: 50 } },
+      { name: 'Red background', sharePct: 20.2, box: { x: 0, y: 0, w: 100, h: 100 } },
+      { name: 'Nike Swoosh logo', sharePct: 1.9, box: { x: 35, y: 35, w: 15, h: 8 } },
+      { name: 'Nike Flyknit text', sharePct: 0, box: { x: 25, y: 25, w: 15, h: 5 } },
+    ],
+    findings: [],
+  },
+};
+
+describe('toAnalysis', () => {
+  it('maps a live response', () => {
+    const a = toAnalysis(live);
+    expect(a).toMatchObject({ score: 58, verdict: 'OPTIMISE', creativeId: live.creative_id, dimensions: live.scores });
+    expect(a.insights).toEqual([
+      'Red running shoe draws 62% of attention',
+      'Red background draws 20% of attention',
+      'Weakest: emotional (27/100)',
+    ]);
+    expect(a.attention![0]).toEqual({ element: 'Red running shoe', share: 61.5 });
   });
-  it('scales a 0..1 score and falls back to attention lines when there are no findings', () => {
-    const a = toAnalysis({ score: 0.65, attention: { elements: [{ name: 'Face', share: 0.5 }] } });
-    expect(a.score).toBe(65);
-    expect(a.insights).toEqual(['Face: 50% of attention']);
-    expect(a.heatmap).toBeUndefined();
+  it('heatmap skips the full-frame background and zero-share elements', () => {
+    const h = toAnalysis(live).heatmap!;
+    expect(h).toHaveLength(2);
+    expect(h[0]).toEqual({ x: 0.5, y: 0.5, r: 0.3, v: 1 });
+    expect(h[1].v).toBeCloseTo(0.038);
   });
+  it('uses findings as insights when there are any', () =>
+    expect(toAnalysis({ ...live, attention: { ...live.attention, findings: [{ fix: 'Add a call to action' }] } }).insights).toEqual(['Add a call to action']));
   it('survives an empty response', () => expect(toAnalysis({})).toMatchObject({ score: 0, insights: [] }));
 });
