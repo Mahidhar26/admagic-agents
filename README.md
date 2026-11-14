@@ -45,7 +45,7 @@ Tests: `npm test`.
 1. Import this repo in Vercel (framework: Next.js).
 2. Storage → add Postgres (Neon). `DATABASE_URL` is added for you.
 3. Add the variables from `.env.example` for Production and Preview.
-4. `vercel.json` runs `/api/cron/release-holds` hourly (protected by `CRON_SECRET`). Holds are also released on every read and by the **Release due payouts** button, so the 2-minute demo hold never waits on the cron.
+4. `vercel.json` runs `/api/cron/release-holds` once a day, the most the Hobby plan allows (protected by `CRON_SECRET`). Holds are also released on every read and by the **Release due payouts** button, so the 2-minute demo hold never waits on the cron.
 
 ### Load the extension
 
