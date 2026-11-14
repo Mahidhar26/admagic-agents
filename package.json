@@ -6,21 +6,36 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "ext:build": "esbuild extension/src/background.ts extension/src/content.ts extension/src/popup.ts --bundle --format=iife --target=chrome120 --outdir=extension/dist && cp extension/manifest.json extension/popup.html extension/src/content.css extension/dist/",
+    "test": "vitest run",
+    "db:push": "drizzle-kit push",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
+    "@neondatabase/serverless": "^1.2.1",
+    "drizzle-orm": "^0.45.4",
+    "mcp-handler": "^2.4.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
-    "@types/node": "^20",
+    "@types/chrome": "^0.3.7",
+    "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
-    "typescript": "^5"
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
   }
 }

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AdMagic Validator</title>
+  <style>
+    body { font: 13px system-ui, sans-serif; width: 340px; margin: 12px; color: #111; }
+    h1 { font-size: 15px; margin: 0 0 8px; }
+    h2 { font-size: 13px; margin: 14px 0 4px; }
+    input { width: 100%; box-sizing: border-box; padding: 4px; margin: 2px 0 6px; }
+    button { padding: 4px 10px; cursor: pointer; }
+    ul { padding-left: 16px; margin: 4px 0; }
+    .muted { color: #666; font-size: 12px; }
+    #msg { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>AdMagic Validator</h1>
+  <p id="msg" role="status"></p>
+  <div id="budget" class="muted">Not paired yet.</div>
+
+  <h2>Compare</h2>
+  <button id="compare" disabled>Compare (select 2–5 ads)</button>
+
+  <h2>Paste a creative URL</h2>
+  <p class="muted" id="noads" hidden>No ads found on this page. Paste an image URL instead.</p>
+  <input id="paste" type="url" placeholder="https://…" aria-label="Creative URL" />
+  <button id="validate">Validate $0.99</button>
+  <div id="pasted"></div>
+
+  <h2>Last receipts</h2>
+  <ul id="receipts"></ul>
+
+  <h2>Settings</h2>
+  <label>Backend URL <input id="backend" type="url" /></label>
+  <label>Pairing code <input id="code" inputmode="numeric" maxlength="6" placeholder="6 digits from the Activity page" /></label>
+  <button id="pair">Pair</button>
+  <p class="muted">The daily limit is set by the brand on the Activity page.</p>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AdMagic Validator + Affiliates
 
-## Getting Started
+Validate any Meta ad in one click, then pay the people who sell it, all with Qatom receipts.
 
-First, run the development server:
+A Chrome extension scores Meta Ad Library ads with AdMagic's neural analysis, paid per use through Qatom. The same Next.js app lets the brand turn a validated ad into an affiliate offer and pay creators, agencies and AI agents for verified clicks and sales through Qatom.
+
+Built for the Agentic Payments Hackathon Toronto, **Use** track (with a light Control layer).
+
+- How money moves: [docs/value-flow.md](docs/value-flow.md)
+- Security and failure modes: [docs/security.md](docs/security.md)
+- Two-minute demo: [docs/demo-script.md](docs/demo-script.md)
+- Reference: [build spec](docs/reference/AdMagic-Validator-Build-Spec.pdf) · [AdMagic on Qatom use case](docs/reference/AdMagic-on-Qatom-use-case-v1.0.pdf)
+
+## What's in the repo
+
+| Path | What |
+| --- | --- |
+| `app/api/validate`, `compare`, `purchase/[id]`, `budget`, `receipts` | Validator API: auth → cache → budget → pay (Qatom) → analyze (AdMagic) |
+| `app/api/affiliates/...`, `app/r/[code]` | Offers, affiliates, tracked links, dwell beacon, signed webhooks, payouts, stats |
+| `app/api/mcp/[transport]` | MCP tools for AI-agent affiliates |
+| `app/api/pair`, `app/api/tokens` | Extension pairing and scoped, revocable tokens |
+| `app/affiliates`, `app/activity`, `app/demo-store/[offerId]`, `app/login` | Brand pages and the demo store |
+| `lib/qatom.ts` | `QatomClient` interface, `MockQatomClient`, `LiveQatomClient` (TODO) |
+| `lib/admagic.ts` | AdMagic client; mock until the real endpoints are wired (`TODO(admagic)`) |
+| `lib/rules.ts` | Pure money and fraud rules (tested in `tests/`) |
+| `extension/` | Chrome extension (Manifest V3), built to `extension/dist` |
+
+## Setup
 
 ```bash
+npm install
+cp .env.example .env.local   # or: vercel env pull .env.local
+npm run db:push              # create tables (needs DATABASE_URL)
+npm run seed                 # demo offer, 3 affiliates, prints an agent MCP token once
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Both `QATOM_MODE` and `ADMAGIC_MODE` default to `mock`, so the whole flow runs before the live APIs are wired. In mock mode, payments over $2 wait 3 seconds for a fake phone approval.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Tests: `npm test`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Deploy on Vercel
 
-## Learn More
+1. Import this repo in Vercel (framework: Next.js).
+2. Storage → add Postgres (Neon). `DATABASE_URL` is added for you.
+3. Add the variables from `.env.example` for Production and Preview.
+4. `vercel.json` runs `/api/cron/release-holds` hourly (protected by `CRON_SECRET`). Holds are also released on every read and by the **Release due payouts** button, so the 2-minute demo hold never waits on the cron.
 
-To learn more about Next.js, take a look at the following resources:
+### Load the extension
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run ext:build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Then open `chrome://extensions`, turn on Developer mode, choose **Load unpacked** and pick `extension/dist`. In the popup, set the backend URL (your Vercel URL or `http://localhost:3000`). On the app's **Activity** page, click **Pair new extension** and enter the 6-digit code in the popup. Put the extension's ID in `EXTENSION_ORIGIN`.
 
-## Deploy on Vercel
+### Connect an AI-agent affiliate
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Create a token on **Activity → Access** (or use the one `npm run seed` prints), then add the MCP server in your client:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```json
+{ "admagic-affiliates": { "url": "https://<your-app>/api/mcp/mcp", "headers": { "Authorization": "Bearer <agent token>" } } }
+```
+
+Tools: `list_affiliate_offers`, `get_affiliate_link(offer_id, qatom_account_id)`, `get_affiliate_earnings(qatom_account_id)`.
+
+## Qatom catalogues
+
+We are listing three catalogues on Qatom ([qatom.ai/learn](https://qatom.ai/learn)):
+
+| Catalogue | AdMagic tools | In this repo |
+| --- | --- | --- |
+| **Analyze**: score, verdict, what works, what to change | `admagic_analyze_creative`, `admagic_get_analysis`, `admagic_creative_feedback`, `admagic_usage` | Validator API + extension (`lib/admagic.ts`) |
+| **Design Lab**: build creatives from insights or prompts | `admagic_design_prompt`, `admagic_generate_image`, `admagic_get_job`, `admagic_generate_copy` | Not built yet |
+| **Attribution and affiliate payouts** (new, not in AdMagic) | none | Affiliates API, `/r/{code}`, webhooks, payouts, MCP tools |
+
+## AdMagic connection
+
+`ADMAGIC_MODE=live` calls AdMagic's MCP endpoint (`ADMAGIC_MCP_URL`, JSON-RPC `tools/call`, `Authorization: Bearer $ADMAGIC_API_KEY`).
+
+- Image score → `admagic_analyze_creative` with `image_url` and `objective` (default `engagement`).
+- Compare → one `admagic_analyze_creative` per creative, ranked (AdMagic has no compare tool).
+- Video → not offered: AdMagic has no video tool yet, so `/api/validate` refuses video before paying.
+- Heatmap → drawn only for attention elements that come back with a box.
+- `toAnalysis()` in `lib/admagic.ts` reads the response defensively because the output schema is not published. Check it against one real response.
+
+## Still to wire
+
+- `lib/qatom.ts`: `LiveQatomClient` once the Qatom team confirms purchase, payout, approval polling and account verification calls.
