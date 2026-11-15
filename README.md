@@ -4,7 +4,7 @@ A crew of AI agents that scores your ads before you spend, launches affiliate of
 
 ## Try the demo
 
-**Live app:** https://admagic-validator.vercel.app
+**Live app:** https://admagic-agents.vercel.app
 
 | | |
 | --- | --- |
