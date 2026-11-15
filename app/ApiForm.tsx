@@ -28,7 +28,7 @@ export function ApiForm({ action, method = 'POST', children, className, confirm 
   return (
     <form onSubmit={onSubmit} className={className}>
       <fieldset disabled={busy} className="contents">{children}</fieldset>
-      {msg && <p role="status" className={`text-sm mt-1 break-all ${msg.ok ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>{msg.text}</p>}
+      {msg && <p role="status" className={`msg basis-full ${msg.ok ? 'ok' : 'bad'}`}>{msg.text}</p>}
     </form>
   );
 }

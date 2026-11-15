@@ -52,18 +52,25 @@ export default async function DemoStore({ params, searchParams }: PageProps<'/de
   const code = typeof aff === 'string' ? aff : (await cookies()).get('aff')?.value;
 
   return (
-    <div className="max-w-md mx-auto card">
+    <div className="max-w-md mx-auto card-flush">
       {code && <Beacon code={code} />}
-      <p className="text-xs uppercase tracking-wide opacity-60">Demo store</p>
-      <h1>{offer.name}</h1>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={offer.creativeUrl} alt={offer.name} className="w-full rounded mb-4" />
-      <form className="flex gap-3">
-        <input type="hidden" name="offerId" value={offer.id} />
-        <button formAction={buy} className="font-semibold">Buy ${PRICE_USD}</button>
-        <button formAction={refund}>Refund</button>
-      </form>
-      {typeof msg === 'string' && <p role="status" className="text-sm mt-3">{msg}</p>}
+      <img src={offer.creativeUrl} alt={offer.name} className="w-full aspect-square object-cover" />
+      <div className="p-5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="eyebrow">Demo store</p>
+          {code && <span className="badge b-accent plain">Referred by /r/{code}</span>}
+        </div>
+        <h1 className="mt-1">{offer.name}</h1>
+        <p className="text-2xl font-semibold num mt-2">${PRICE_USD}.00</p>
+        <form className="flex gap-2 mt-4">
+          <input type="hidden" name="offerId" value={offer.id} />
+          <button formAction={buy} className="btn-primary flex-1 min-h-11">Buy ${PRICE_USD}</button>
+          <button formAction={refund} className="min-h-11">Refund</button>
+        </form>
+        {typeof msg === 'string' && <p role="status" className={`msg ${/^(Bought|Refunded)/.test(msg) ? 'ok' : 'bad'}`}>{msg}</p>}
+        <p className="small muted mt-4">The store&apos;s server sends a signed webhook for each sale; the affiliate is paid for it.</p>
+      </div>
     </div>
   );
 }
