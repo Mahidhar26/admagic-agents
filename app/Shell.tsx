@@ -18,6 +18,7 @@ const NAV: { href: string; label: string; agent: AgentName; sub: string }[] = [
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const tab = useSearchParams().get('tab') ?? 'offers';
+  if (path === '/') return <>{children}</>; // the landing page brings its own header
   if (path.startsWith('/demo-store') || path === '/login') return <main className="flex-1 px-4 py-10">{children}</main>;
 
   const active = (href: string) => {
@@ -30,13 +31,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex-1 md:grid md:grid-cols-[240px_1fr]">
       <aside className="md:sticky md:top-0 md:h-screen flex flex-col border-b md:border-b-0 md:border-r" style={{ background: 'var(--surface)', borderColor: 'var(--line)' }}>
-        <Link href="/" className="flex items-center gap-2.5 px-5 h-14 no-underline shrink-0">
+        <Link href="/workspace" className="flex items-center gap-2.5 px-5 h-14 no-underline shrink-0">
           <span className="grid place-items-center w-7 h-7 rounded-lg font-bold text-[13px]" style={{ background: 'var(--text)', color: 'var(--bg)' }}>A</span>
           <span className="font-semibold tracking-tight">AdMagic</span>
           <span className="text-[11px] px-1.5 py-0.5 rounded-md" style={{ background: 'var(--surface-2)', color: 'var(--muted)' }}>Agents</span>
         </Link>
         <nav aria-label="Main" className="flex md:flex-col gap-0.5 overflow-x-auto px-3 pb-3 md:pb-0 md:flex-1">
-          <Link href="/" aria-current={path === '/' ? 'page' : undefined} className={item} style={path === '/' ? on : { color: 'var(--muted)' }}>
+          <Link href="/workspace" aria-current={path === '/workspace' ? 'page' : undefined} className={item} style={path === '/workspace' ? on : { color: 'var(--muted)' }}>
             <span className="grid place-items-center w-[22px] h-[22px] rounded-md" style={{ background: 'var(--text)', color: 'var(--bg)' }}><Icon name="spark" size={12} /></span>
             Workspace
           </Link>

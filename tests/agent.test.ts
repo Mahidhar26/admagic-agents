@@ -17,3 +17,12 @@ describe('parseIntent', () => {
     expect(parseIntent('make me a sandwich')).toEqual({ kind: 'help' });
   });
 });
+
+describe('demo sign-in', async () => {
+  const { credentialsMatch, DEMO_ACCOUNT } = await import('../lib/auth');
+  it('accepts only the demo email and password', () => {
+    expect(credentialsMatch(` ${DEMO_ACCOUNT.email.toUpperCase()} `, DEMO_ACCOUNT.password)).toBe(true);
+    expect(credentialsMatch(DEMO_ACCOUNT.email, 'wrong')).toBe(false);
+    expect(credentialsMatch('someone@else.com', DEMO_ACCOUNT.password)).toBe(false);
+  });
+});

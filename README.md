@@ -1,6 +1,42 @@
-# AdMagic Validator + Affiliates
+# AdMagic Agents
 
-Validate any Meta ad in one click, then pay the people who sell it, all with Qatom receipts.
+A crew of AI agents that scores your ads before you spend, launches affiliate offers from the winners, and pays creators, agencies and AI agents only for verified results, with a receipt for every payment.
+
+## Try the demo
+
+**Live app:** https://admagic-validator.vercel.app
+
+| | |
+| --- | --- |
+| Email | `demo@admagic.ai` |
+| Password | `admagic-demo` |
+
+The home page is an overview; **Log in** (or **Sign up**) shows and pre-fills these and takes you to the **Workspace** (`/workspace`). It's one shared demo brand: everything you do is visible to other visitors.
+
+What to try in the Workspace, in this order:
+
+1. Click **Budget and wallets**: Guard and Paymaster report today's spend, wallet balances and what affiliates are owed.
+2. Click **Re-check my last ad**: the run streams each step (budget check → payment → AdMagic score). It was scored before, so it comes back from cache at $0.
+3. Click **Launch an offer from my best ad**: Broker picks your best-scored ad and drafts terms; **Open** takes you to the offer wizard.
+4. Open **Limits and access** (Guard) to see every payment, everything refused, and the scoped tokens you can revoke.
+5. **Settings → Payments**: Qatom is the default payment method.
+
+Scoring a **new** ad link costs a real AdMagic analysis and counts against the demo's daily budget; repeats are free. Payments run in Qatom test mode, so no real money moves.
+
+## The agents
+
+| Agent | Job | Page |
+| --- | --- | --- |
+| **Scout** | Scores ads with AdMagic's neural analysis (single or 2–5 to compare) | Scored ads |
+| **Broker** | Turns winners into affiliate offers; tracks qualified clicks and sales | Offers, Affiliates, Performance |
+| **Paymaster** | Releases holds and pays verified affiliates, one receipt per payout | Payouts |
+| **Guard** | Daily budget, phone approval above the wallet limit, scoped tokens, the refused log | Limits and access |
+
+You talk to them in the Workspace composer: paste an ad link to score it, 2–5 links to compare, or ask to launch an offer, release payouts, or check status. Plain rules map your words to these tasks (`lib/agent.ts`), so a run never guesses. Each run streams its real steps from `/api/agent/run`.
+
+## How it works
+
+Validate any Meta ad in one click, then pay the people who sell it, all with receipts.
 
 A Chrome extension scores Meta Ad Library ads with AdMagic's neural analysis, paid per use through Qatom. The same Next.js app lets the brand turn a validated ad into an affiliate offer and pay creators, agencies and AI agents for verified clicks and sales through Qatom.
 
@@ -20,7 +56,9 @@ Built for the Agentic Payments Hackathon Toronto, **Use** track (with a light Co
 | `app/api/qatom/score`, `compare` | Fulfilment for the Qatom catalog items "AdMagic: Score one ad" (`{ image_url, objective? }`) and "AdMagic: Compare ad creatives" (`{ image_urls, objective? }`). Qatom calls them after the buyer pays, with `Authorization: Bearer $QATOM_FULFILMENT_SECRET` |
 | `app/api/mcp/[transport]` | MCP tools for AI-agent affiliates |
 | `app/api/pair`, `app/api/tokens` | Extension pairing and scoped, revocable tokens |
-| `app/affiliates`, `app/activity`, `app/demo-store/[offerId]`, `app/login` | Brand pages and the demo store |
+| `app/page.tsx` | Public landing page (overview, log in, sign up) |
+| `app/workspace`, `app/Mission.tsx`, `app/api/agent/run` | Agent workspace: composer, streamed runs, crew, guardrails, activity feed |
+| `app/validator`, `app/affiliates`, `app/activity`, `app/settings`, `app/demo-store/[offerId]`, `app/login` | Agent pages, settings and the demo store |
 | `lib/qatom.ts` | `QatomClient` interface, `MockQatomClient`, `LiveQatomClient` (TODO) |
 | `lib/admagic.ts` | AdMagic client; mock until the real endpoints are wired (`TODO(admagic)`) |
 | `lib/rules.ts` | Pure money and fraud rules (tested in `tests/`) |

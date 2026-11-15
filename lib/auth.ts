@@ -39,9 +39,13 @@ export const requireBearer = (req: Request, scope: string) => requireToken(req.h
 const COOKIE = 'admin_session';
 const sign = (v: string) => createHmac('sha256', process.env.SESSION_SECRET ?? 'dev-only-secret').update(v).digest('hex');
 
-export function passwordMatches(input: string) {
-  const want = Buffer.from(sha256(process.env.ADMIN_PASSWORD ?? ''));
-  return !!process.env.ADMIN_PASSWORD && timingSafeEqual(Buffer.from(sha256(input)), want);
+// shortcut: one shared demo account for judges; DEMO_EMAIL / DEMO_PASSWORD override it. Replace with real sign-in (Clerk) after the hackathon.
+export const DEMO_ACCOUNT = { email: process.env.DEMO_EMAIL ?? 'demo@admagic.ai', password: process.env.DEMO_PASSWORD ?? 'admagic-demo' };
+
+export function credentialsMatch(email: string, password: string) {
+  const same = (a: string, b: string) => timingSafeEqual(Buffer.from(sha256(a)), Buffer.from(sha256(b)));
+  // check both every time so the response time doesn't say which one was wrong
+  return [same(email.trim().toLowerCase(), DEMO_ACCOUNT.email.toLowerCase()), same(password, DEMO_ACCOUNT.password)].every(Boolean);
 }
 
 export async function startSession() {

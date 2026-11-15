@@ -8,7 +8,7 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AdMagic Platform',
+  title: 'AdMagic Agents',
   description: 'Validate any Meta ad in one click, then pay the people who sell it, with a receipt for every payment.',
 };
 
